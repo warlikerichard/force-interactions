@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <!-- saved from url=(0045)https://hungria.imd.ufrn.br/~tetsu/d3Project/ -->
 <html lang="pt-Br"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<script src="https://unpkg.com/d3-octree"></script>
     <style> body { margin: 0; } </style>
     <script src="./force interactions_files/3d-force-graph"></script><style type="text/css">.graph-info-msg {
   top: 50%;
@@ -116,6 +117,14 @@
     <div id="3d-graph"><div style="position: relative;"><div><div class="scene-container" style="position: relative; width: 1366px; height: 625px;"><div class="scene-nav-info">Left-click: rotate, Mouse-wheel/middle-click: zoom, Right-click: pan</div><div class="scene-tooltip" style="top: 498px; left: 334px; transform: translate(-24.451%, 21px);"></div><canvas data-engine="three.js r139" width="1366" height="625" style="display: block; touch-action: none; width: 1366px; height: 625px; cursor: auto;"></canvas></div></div><div class="graph-info-msg"></div></div></div>
 
     <script>
+		<!-- d3-Octree -->
+		
+		const octree = d3.octree()
+		
+		
+		console.log(octree)
+	
+		<!-- Force interactions -->
 		
 		const N = 100;
 		const T = 300;
@@ -146,6 +155,9 @@
 			  name:"Ar",
 			  size:18,
 			  group:1,
+			  x: Math.random()*2 - 1,
+			  y: Math.random()*2 - 1,
+			  z: Math.random()*2 - 1,
 			})),
 		/*	
 			nodes: [
@@ -202,6 +214,7 @@
 			return false;
 		}
 		
+		//Note 3: Aqui é um bom lugar para fazer uso da octree, e reduzir a quantidade de nodes que entrarão no cálculo
 		function lennard_jones(nodes){
 			for (var i = 0; i < nodes.length; i++){
 				
@@ -234,7 +247,7 @@
 		}
 		
         const Graph = ForceGraph3D()
-          (document.getElementById('3d-graph'));
+        Graph(document.getElementById('3d-graph'));
 		  
 		 Graph.cooldownTime(Infinity)
 		  .d3AlphaDecay(0)
