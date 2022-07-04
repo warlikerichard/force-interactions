@@ -118,11 +118,8 @@
 
     <script>
 		<!-- d3-Octree -->
-		
+
 		const octree = d3.octree()
-		
-		
-		console.log(octree)
 	
 		<!-- Force interactions -->
 		
@@ -167,9 +164,20 @@
             ],*/
 			
           links: []
-        };		
+        };	
 		
 		let nodes = gData.nodes;
+		update_octree()
+		
+		//Testing octree
+		function update_octree(){
+			octree.removeAll(octree.data())
+		
+			octree.addAll(nodes.map(node => {
+				return[node.x, node.y, node.z]
+			}));
+		}
+		
 		
 		nodes.forEach(function (node){
 			node.x = Math.random()*(N)*2;
@@ -287,13 +295,22 @@
 		  
 		  //note 2: Gotta find a way to update the position frequently and with lesser processing cost. Maybe through interpolation?
 		 .d3Force('update_pos', () => {
+					
+				
 				for(var a = 0; a < 100; a++){
+					update_octree();
 					update_pos(nodes);
+					
+					//Adds new positions to octree
+					
+	
 					for (var i = 0; i < nodes.length; i++){
 						nodes[i].force_x = 0;
 						nodes[i].force_y = 0;
 						nodes[i].force_z = 0;
 					}
+					//Note 4: Now, we just have to reduce the cost of Lennard Jones calculation
+					//by applying it for nearby points from each node
 					lennard_jones(nodes);
 					for (let i = 0; i < nodes.length; i++) {
 						node = nodes[i];
@@ -390,6 +407,8 @@
 			.nodeAutoColorBy("group")
 			.nodeVal(function volume(i){return (4/3) *Math.Pi * sigma[i.name]**3});
 			//.nodeTitle("name");
+			
+
 		  
     </script>
 
