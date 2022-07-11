@@ -125,7 +125,7 @@
 	
 		<!-- Force interactions -->
 		
-		const N = 100;
+		const N = 30;
 		const T = 300;
 		const dt = 0.1;
 		// atomic mass
@@ -170,6 +170,7 @@
 		
 		let nodes = gData.nodes;
 		
+		
 		//Testing octree
 		function update_octree(){
 			octree.removeAll(octree.data())
@@ -196,24 +197,6 @@
 			return nearbyNodes;
 		}
 		
-		<!-- function setOctants(){ -->
-			<!-- octree.visit((node, xmin, ymin, zmin, xmax, ymax, zmax) => { -->
-					<!-- const octantKey = String(xmin) + String(ymin) + String(zmin) + String(xmax) + String(ymax) + String(zmax) -->
-					<!-- if(octants[octantKey] && !node.length){ -->
-						<!-- octants[octantKey].push(node.data) -->
-					<!-- } -->
-					<!-- else if(!node.length){ -->
-						
-						<!-- octants = {...octants, [`${octantKey}`]: [node.data]} -->
-					<!-- } -->
-				<!-- }) -->
-			<!-- } -->
-		<!-- octree.add([1, 2, 3]) -->
-		<!-- .add([2, 3, 4]) -->
-		
-		<!-- console.log(octree.find(1, 2.9, 3.9, 2)) -->
-		
-		
 		nodes.forEach(function (node){
 			node.x = Math.random()*(N)*2;
 			node.y = Math.random()*(N)*2;
@@ -227,6 +210,7 @@
 		});
 		
 		// calculate forces for first iteration
+		update_octree()
 		lennard_jones(nodes);
 		
 		// calculate acceleration for first iteration
@@ -259,18 +243,33 @@
 		
 		//Note 3: Aqui é um bom lugar para fazer uso da octree, e reduzir a quantidade de nodes que entrarão no cálculo
 		function lennard_jones(nodes){
+			//Octree está ficando vazio. Por quê? Aparentemente valores x, y, z, vx, vy e vz dos nodes estão recebendo NaN (Not a number).
+			//Os nodes ficam vazios logo após a primeira execução do lennard_jones, talvez em algum momento as velocidades dos nodes ficam nulas.
+			update_octree()
+			//console.log(octree.data())
 			for (var i = 0; i < nodes.length; i++){
-				let NodesCloseToCurrent = findNearbyPoints(nodes[i], 65)
+				let nodesCloseToCurrent = findNearbyPoints([nodes[i].x, nodes[i].y, nodes[i].z], 25)
+				test_count++
+				console.log(nodes[i], test_count)
 				
-				for (var j = 0; j < i; j++){
-					if(i == j){
-						continue;
-					}
-					r_x = nodes[j].x - nodes[i].x;
-					r_y = nodes[j].y - nodes[i].y;
-					r_z = nodes[j].z - nodes[i].z;
+				for (var j = 0; j < nodesCloseToCurrent.length; j++){
+					//Ajustar função para retornar array de índides correspondentes ao j-ésimo elemento de nodesCloseToCurrent que está em nodes.
+					//Ou seja, nodes[index] === nodesCloseToCurrent[j]
+					let currIndex = nodes.reduce((acc, curr, index) => {
+						
+						const isMatch = curr.x === nodesCloseToCurrent[j][0] && curr.y === nodesCloseToCurrent[j][1] && curr.z === nodesCloseToCurrent[j][2]
+						if(isMatch){
+							return index
+						}
+						return acc
+					}, 0)
+				
+				
+					r_x = nodesCloseToCurrent[j][0] - nodes[i].x;
+					r_y = nodesCloseToCurrent[j][1] - nodes[i].y;
+					r_z = nodesCloseToCurrent[j][2] - nodes[i].z;
 					d = (r_x**2 + r_y**2 + r_z**2)**0.5;
-					force_scalar = lj_force(d, (epsilon[nodes[i].name]*epsilon[nodes[j].name])**0.5, (sigma[nodes[i].name]+sigma[nodes[j].name])/2);
+					force_scalar = lj_force(d, (epsilon[nodes[i].name]*epsilon[nodes[i].name])**0.5, (sigma[nodes[i].name]+sigma[nodes[i].name])/2);
 					force_x = force_scalar * r_x / d;
 					force_y = force_scalar * r_y / d;
 					force_z = force_scalar * r_z / d;
@@ -278,10 +277,11 @@
 					nodes[i].force_y += -force_y;
 					nodes[i].force_z += -force_z;
 					
-					nodes[j].force_x += force_x;
-					nodes[j].force_y += force_y;
-					nodes[j].force_z += force_z;
+					nodes[currIndex].force_x += force_x;
+					nodes[currIndex].force_y += force_y;
+					nodes[currIndex].force_z += force_z;
 				}
+				
 			}
 			
 			function lj_force (r, epsilon, sigma){
@@ -331,8 +331,7 @@
 		  
 		  //note 2: Gotta find a way to update the position frequently and with lesser processing cost. Maybe through interpolation?
 		 .d3Force('update_pos', () => {
-				update_octree()
-				
+				//console.log(octree.data()[0])
 				<!-- if(test_count < 1){ -->
 					<!-- octree.data().map(node => { -->
 						<!-- console.log(findNearbyPoints(node, 65)) -->
@@ -343,16 +342,15 @@
 				for(var a = 0; a < 100; a++){
 					update_pos(nodes);
 					
-					//Adds new positions to octree
 					
+					//Adds new positions to octree
 	
 					for (var i = 0; i < nodes.length; i++){
 						nodes[i].force_x = 0;
 						nodes[i].force_y = 0;
 						nodes[i].force_z = 0;
 					}
-					//Note 4: Now, we just have to reduce the cost of Lennard Jones calculation
-					//by applying it for nearby points from each node
+
 					lennard_jones(nodes);
 					for (let i = 0; i < nodes.length; i++) {
 						node = nodes[i];
