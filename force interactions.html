@@ -120,6 +120,8 @@
 		<!-- d3-Octree -->
 
 		const octree = d3.octree()
+		let test_count = 0
+		let octants = {}
 	
 		<!-- Force interactions -->
 		
@@ -167,7 +169,6 @@
         };	
 		
 		let nodes = gData.nodes;
-		update_octree()
 		
 		//Testing octree
 		function update_octree(){
@@ -177,6 +178,40 @@
 				return[node.x, node.y, node.z]
 			}));
 		}
+		
+		//Retorna um array de nodes próximos ao vetor dado dentro do raio dado.
+		function findNearbyPoints(vector, ray){
+			let octreeCopy = d3.octree().addAll(octree.data())
+			let nearbyNodes = []
+			let result
+			
+			do{
+				result = octreeCopy.find(vector[0], vector[1], vector[2], ray)
+				if(result){
+					nearbyNodes.push(result)
+					octreeCopy.remove(result)
+				}
+			} while(result)
+			
+			return nearbyNodes;
+		}
+		
+		<!-- function setOctants(){ -->
+			<!-- octree.visit((node, xmin, ymin, zmin, xmax, ymax, zmax) => { -->
+					<!-- const octantKey = String(xmin) + String(ymin) + String(zmin) + String(xmax) + String(ymax) + String(zmax) -->
+					<!-- if(octants[octantKey] && !node.length){ -->
+						<!-- octants[octantKey].push(node.data) -->
+					<!-- } -->
+					<!-- else if(!node.length){ -->
+						
+						<!-- octants = {...octants, [`${octantKey}`]: [node.data]} -->
+					<!-- } -->
+				<!-- }) -->
+			<!-- } -->
+		<!-- octree.add([1, 2, 3]) -->
+		<!-- .add([2, 3, 4]) -->
+		
+		<!-- console.log(octree.find(1, 2.9, 3.9, 2)) -->
 		
 		
 		nodes.forEach(function (node){
@@ -225,6 +260,7 @@
 		//Note 3: Aqui é um bom lugar para fazer uso da octree, e reduzir a quantidade de nodes que entrarão no cálculo
 		function lennard_jones(nodes){
 			for (var i = 0; i < nodes.length; i++){
+				let NodesCloseToCurrent = findNearbyPoints(nodes[i], 65)
 				
 				for (var j = 0; j < i; j++){
 					if(i == j){
@@ -295,10 +331,16 @@
 		  
 		  //note 2: Gotta find a way to update the position frequently and with lesser processing cost. Maybe through interpolation?
 		 .d3Force('update_pos', () => {
-					
+				update_octree()
+				
+				<!-- if(test_count < 1){ -->
+					<!-- octree.data().map(node => { -->
+						<!-- console.log(findNearbyPoints(node, 65)) -->
+					<!-- }) -->
+					<!-- test_count++ -->
+				<!-- } -->
 				
 				for(var a = 0; a < 100; a++){
-					update_octree();
 					update_pos(nodes);
 					
 					//Adds new positions to octree
