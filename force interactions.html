@@ -125,7 +125,7 @@
 	
 		<!-- Force interactions -->
 		
-		const N = 30;
+		const N = 100;
 		const T = 300;
 		const dt = 0.1;
 		// atomic mass
@@ -243,14 +243,10 @@
 		
 		//Note 3: Aqui é um bom lugar para fazer uso da octree, e reduzir a quantidade de nodes que entrarão no cálculo
 		function lennard_jones(nodes){
-			//Octree está ficando vazio. Por quê? Aparentemente valores x, y, z, vx, vy e vz dos nodes estão recebendo NaN (Not a number).
-			//Os nodes ficam vazios logo após a primeira execução do lennard_jones, talvez em algum momento as velocidades dos nodes ficam nulas.
-			update_octree()
+			
 			//console.log(octree.data())
 			for (var i = 0; i < nodes.length; i++){
-				let nodesCloseToCurrent = findNearbyPoints([nodes[i].x, nodes[i].y, nodes[i].z], 25)
-				test_count++
-				console.log(nodes[i], test_count)
+				let nodesCloseToCurrent = findNearbyPoints([nodes[i].x, nodes[i].y, nodes[i].z], N/8)
 				
 				for (var j = 0; j < nodesCloseToCurrent.length; j++){
 					//Ajustar função para retornar array de índides correspondentes ao j-ésimo elemento de nodesCloseToCurrent que está em nodes.
@@ -263,8 +259,10 @@
 						}
 						return acc
 					}, 0)
-				
-				
+					
+					if(nodesCloseToCurrent[j][0] === nodes[i].x || nodesCloseToCurrent[j][1] === nodes[i].y || nodesCloseToCurrent[j][2] === nodes[i].z){
+						continue;
+					}
 					r_x = nodesCloseToCurrent[j][0] - nodes[i].x;
 					r_y = nodesCloseToCurrent[j][1] - nodes[i].y;
 					r_z = nodesCloseToCurrent[j][2] - nodes[i].z;
@@ -341,6 +339,7 @@
 				
 				for(var a = 0; a < 100; a++){
 					update_pos(nodes);
+					update_octree()
 					
 					
 					//Adds new positions to octree
